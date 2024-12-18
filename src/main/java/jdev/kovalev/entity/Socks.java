@@ -30,14 +30,14 @@ public class Socks {
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     @Column(name = "id")
-    UUID id;
+    private UUID id;
 
     @Column(name = "color")
-    String color;
+    private String color;
 
     @Column(name = "cotton_percentage")
-    Double cottonPercentage;
+    private Double cottonPercentage;
 
     @Column(name = "number")
-    Integer number;
+    private Integer number;
 }
