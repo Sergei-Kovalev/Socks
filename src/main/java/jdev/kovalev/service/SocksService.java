@@ -10,4 +10,6 @@ public interface SocksService {
     SocksResponseDto outcome(RequestDto requestDto);
     List<SocksResponseDto> filter(String color, Integer cottonMoreThan, Integer cottonLessThan, Integer cottonEqual,
                                   Integer numberMoreThan, Integer numberLessThan, Integer numberEqual);
+
+    SocksResponseDto update(String id, RequestDto requestDto);
 }

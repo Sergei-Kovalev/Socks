@@ -4,7 +4,9 @@ import jdev.kovalev.dto.request.RequestDto;
 import jdev.kovalev.dto.response.SocksResponseDto;
 import jdev.kovalev.entity.Socks;
 import jdev.kovalev.exception.NotEnoughSocksException;
+import jdev.kovalev.exception.SocksNotFoundException;
 import jdev.kovalev.exception.UnlogicalFilterConditionException;
+import jdev.kovalev.exception.WrongUUIDFormatException;
 import jdev.kovalev.mapper.SocksMapper;
 import jdev.kovalev.repository.SocksRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -215,5 +217,36 @@ class SocksServiceImplTest {
                                                      numberMoreThan, numberLessThan, null))
                 .isInstanceOf(UnlogicalFilterConditionException.class)
                 .hasMessageContaining("Параметры фильтрации выбраны некорректно");
+    }
+
+    @Test
+    void update_whenParametersCorrect() {
+        Mockito.when(socksRepository.findById(uuid))
+                .thenReturn(Optional.of(socks));
+        Mockito.when(socksMapper.fromSocksToSocksResponseDto(Mockito.any()))
+                .thenReturn(responseDto);
+
+        SocksResponseDto actual = socksService.update(uuid.toString(), requestDto);
+
+        assertThat(actual)
+                .isNotNull()
+                .isEqualTo(responseDto);
+    }
+
+    @Test
+    void update_whenUUIDIncorrect() {
+       assertThatThrownBy(() -> socksService.update("bla bla bla", requestDto))
+               .isInstanceOf(WrongUUIDFormatException.class)
+               .hasMessageContaining("Неверный формат id - он должен быть формата UUID");
+    }
+
+    @Test
+    void update_whenSocksNotFound() {
+        Mockito.when(socksRepository.findById(uuid))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> socksService.update(uuid.toString(), requestDto))
+                .isInstanceOf(SocksNotFoundException.class)
+                .hasMessageContaining("На складе нет носков с таким id");
     }
 }

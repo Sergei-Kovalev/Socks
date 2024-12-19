@@ -4,7 +4,9 @@ import jdev.kovalev.dto.request.RequestDto;
 import jdev.kovalev.dto.response.SocksResponseDto;
 import jdev.kovalev.entity.Socks;
 import jdev.kovalev.exception.NotEnoughSocksException;
+import jdev.kovalev.exception.SocksNotFoundException;
 import jdev.kovalev.exception.UnlogicalFilterConditionException;
+import jdev.kovalev.exception.WrongUUIDFormatException;
 import jdev.kovalev.mapper.SocksMapper;
 import jdev.kovalev.repository.SocksRepository;
 import jdev.kovalev.service.SocksService;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -76,6 +79,26 @@ public class SocksServiceImpl implements SocksService {
         return socksRepository.findAll(specification, sort).stream()
                 .map(socksMapper::fromSocksToSocksResponseDto)
                 .toList();
+    }
+
+    @Override
+    @Transactional
+    public SocksResponseDto update(String id, RequestDto requestDto) {
+        UUID uuid;
+        try {
+            uuid = UUID.fromString(id);
+        } catch (IllegalArgumentException e) {
+            throw new WrongUUIDFormatException();
+        }
+
+        return socksRepository.findById(uuid)
+                .map(socks -> {
+                    socks.setColor(requestDto.getColor());
+                    socks.setCottonPercentage((double) (requestDto.getCottonPercentage() / 100));
+                    socks.setNumber(requestDto.getNumber());
+                    return socksMapper.fromSocksToSocksResponseDto(socks);
+        })
+                .orElseThrow(SocksNotFoundException::new);
     }
 
     private Specification<Socks> configureSpecification(String color, Integer cottonMoreThan, Integer cottonLessThan,

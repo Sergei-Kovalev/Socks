@@ -8,7 +8,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -32,7 +34,7 @@ public class SocksController {
     }
 
     @PostMapping("/socks/outcome")
-    public ResponseEntity<SocksResponseDto> ountcome(@RequestBody @Valid RequestDto requestDto) {
+    public ResponseEntity<SocksResponseDto> outcome(@RequestBody @Valid RequestDto requestDto) {
         return ResponseEntity.ok(socksService.outcome(requestDto));
     }
 
@@ -43,9 +45,14 @@ public class SocksController {
                                                          @RequestParam(required = false) Integer cottonEqual,
                                                          @RequestParam(required = false) Integer numberMoreThan,
                                                          @RequestParam(required = false) Integer numberLessThan,
-                                                         @RequestParam(required = false) Integer numberEqual
-                                                         ) {
+                                                         @RequestParam(required = false) Integer numberEqual) {
         return ResponseEntity.ok(socksService.filter(color, cottonMoreThan, cottonLessThan, cottonEqual,
                                                      numberMoreThan, numberLessThan, numberEqual));
+    }
+
+    @PutMapping("/socks/{id}")
+    public ResponseEntity<SocksResponseDto> update(@PathVariable String id,
+                                                   @RequestBody @Valid RequestDto requestDto) {
+        return ResponseEntity.ok(socksService.update(id, requestDto));
     }
 }

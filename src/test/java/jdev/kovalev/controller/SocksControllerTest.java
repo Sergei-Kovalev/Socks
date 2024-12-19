@@ -5,7 +5,9 @@ import jdev.kovalev.controller.hadler.ExceptionHandlerController;
 import jdev.kovalev.dto.request.RequestDto;
 import jdev.kovalev.dto.response.SocksResponseDto;
 import jdev.kovalev.exception.NotEnoughSocksException;
+import jdev.kovalev.exception.SocksNotFoundException;
 import jdev.kovalev.exception.UnlogicalFilterConditionException;
+import jdev.kovalev.exception.WrongUUIDFormatException;
 import jdev.kovalev.service.SocksService;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
@@ -203,6 +205,61 @@ class SocksControllerTest {
                                 .params(params))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Параметры фильтрации выбраны некорректно"))
+                .andDo(print());
+    }
+
+    @Test
+    @SneakyThrows
+    void update_whenCorrectRequest() {
+        String id = UUID.randomUUID().toString();
+        String jsonRequestQuery = objectMapper.writeValueAsString(requestDto);
+        String jsonResponseQuery = objectMapper.writeValueAsString(socksResponseDto);
+
+        Mockito.when(socksService.update(id, requestDto))
+                .thenReturn(socksResponseDto);
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/api//socks/{id}", id)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(jsonRequestQuery))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().json(jsonResponseQuery))
+                .andDo(print());
+
+        Mockito.verify(socksService).update(id, requestDto);
+    }
+
+    @Test
+    @SneakyThrows
+    void update_whenSocksNotFoundById_thenReturnSocksNotFoundException() {
+        String id = UUID.randomUUID().toString();
+        String jsonRequestQuery = objectMapper.writeValueAsString(requestDto);
+
+        Mockito.when(socksService.update(Mockito.any(), Mockito.any()))
+                .thenThrow(new SocksNotFoundException());
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/api//socks/{id}", id)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(jsonRequestQuery))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("На складе нет носков с таким id"))
+                .andDo(print());
+    }
+
+    @Test
+    @SneakyThrows
+    void update_whenUUIDIncorrectFormat_thenReturnWrongUUIDFormatException() {
+        String id = UUID.randomUUID().toString();
+        String jsonRequestQuery = objectMapper.writeValueAsString(requestDto);
+
+        Mockito.when(socksService.update(Mockito.any(), Mockito.any()))
+                .thenThrow(new WrongUUIDFormatException());
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/api//socks/{id}", id)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(jsonRequestQuery))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Неверный формат id - он должен быть формата UUID"))
                 .andDo(print());
     }
 }
