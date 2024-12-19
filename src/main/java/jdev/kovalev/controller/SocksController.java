@@ -55,4 +55,9 @@ public class SocksController {
                                                    @RequestBody @Valid RequestDto requestDto) {
         return ResponseEntity.ok(socksService.update(id, requestDto));
     }
+
+    @PostMapping("/socks/batch")
+    public ResponseEntity<String> upload(@RequestParam String path) {
+        return ResponseEntity.ok(socksService.upload(path));
+    }
 }

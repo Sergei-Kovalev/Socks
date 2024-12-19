@@ -12,4 +12,6 @@ public interface SocksService {
                                   Integer numberMoreThan, Integer numberLessThan, Integer numberEqual);
 
     SocksResponseDto update(String id, RequestDto requestDto);
+
+    String upload(String path);
 }

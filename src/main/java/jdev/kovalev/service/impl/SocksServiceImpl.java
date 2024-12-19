@@ -11,8 +11,10 @@ import jdev.kovalev.mapper.SocksMapper;
 import jdev.kovalev.repository.SocksRepository;
 import jdev.kovalev.service.SocksService;
 import jdev.kovalev.service.specification.SocksFilterSpecification;
+import jdev.kovalev.util.ExcelFileLoader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -23,10 +25,15 @@ import java.util.UUID;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_ = {@Lazy})
 public class SocksServiceImpl implements SocksService {
+    public static final String SUCCESSFULL_FILE_READ = "Файл успешно прочитан. Информация о патриях успешно добавлена в базу данных";
     private final SocksRepository socksRepository;
     private final SocksMapper socksMapper;
+    private final ExcelFileLoader fileLoader;
+
+    @Lazy
+    private final SocksServiceImpl self;
 
     @Override
     @Transactional
@@ -69,8 +76,8 @@ public class SocksServiceImpl implements SocksService {
                                          Integer cottonEqual, Integer numberMoreThan, Integer numberLessThan,
                                          Integer numberEqual) {
         Specification<Socks> specification = configureSpecification(color, cottonMoreThan, cottonLessThan,
-                                                                         cottonEqual, numberMoreThan, numberLessThan, 
-                                                                         numberEqual);
+                                                                    cottonEqual, numberMoreThan, numberLessThan,
+                                                                    numberEqual);
         Sort sortByColor = Sort.by(Sort.Direction.ASC, "color");
         Sort sortByCottonPercentage = Sort.by(Sort.Direction.ASC, "cottonPercentage");
 
@@ -97,8 +104,14 @@ public class SocksServiceImpl implements SocksService {
                     socks.setCottonPercentage((double) (requestDto.getCottonPercentage() / 100));
                     socks.setNumber(requestDto.getNumber());
                     return socksMapper.fromSocksToSocksResponseDto(socks);
-        })
+                })
                 .orElseThrow(SocksNotFoundException::new);
+    }
+
+    @Override
+    public String upload(String path) {
+        fileLoader.loadExcelFile(path).forEach(self::income);
+        return SUCCESSFULL_FILE_READ;
     }
 
     private Specification<Socks> configureSpecification(String color, Integer cottonMoreThan, Integer cottonLessThan,

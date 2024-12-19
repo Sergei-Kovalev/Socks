@@ -28,6 +28,7 @@ repositories {
 }
 
 val mapstructVersion = "1.6.3"
+val apachePoiVersion = "5.3.0"
 
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
@@ -38,6 +39,10 @@ dependencies {
 	compileOnly("org.projectlombok:lombok")
 	runtimeOnly("org.postgresql:postgresql")
 	annotationProcessor("org.projectlombok:lombok")
+
+	implementation("org.apache.poi:poi:${apachePoiVersion}")
+	implementation("org.apache.poi:poi-ooxml:${apachePoiVersion}")
+	implementation("org.apache.commons:commons-collections4:4.5.0-M2")
 
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")

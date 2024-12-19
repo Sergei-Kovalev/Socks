@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jdev.kovalev.controller.hadler.ExceptionHandlerController;
 import jdev.kovalev.dto.request.RequestDto;
 import jdev.kovalev.dto.response.SocksResponseDto;
+import jdev.kovalev.exception.LoadFileDataException;
 import jdev.kovalev.exception.NotEnoughSocksException;
 import jdev.kovalev.exception.SocksNotFoundException;
 import jdev.kovalev.exception.UnlogicalFilterConditionException;
@@ -181,8 +182,8 @@ class SocksControllerTest {
                 .andExpect(status().isOk())
                 .andDo(print());
 
-        Mockito.verify(socksService).filter(Mockito.any(), Mockito.any(),Mockito.any(),
-                                            Mockito.any(),Mockito.any(),Mockito.any(),Mockito.any());
+        Mockito.verify(socksService).filter(Mockito.any(), Mockito.any(), Mockito.any(),
+                                            Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
     }
 
     @Test
@@ -260,6 +261,39 @@ class SocksControllerTest {
                                 .content(jsonRequestQuery))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Неверный формат id - он должен быть формата UUID"))
+                .andDo(print());
+    }
+
+    @Test
+    @SneakyThrows
+    void batch_whenRequestCorrect() {
+        String path = "any path";
+        Mockito.when(socksService.upload(path))
+                .thenReturn("Success");
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/socks/batch")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .param("path", path))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_PLAIN_VALUE))
+                .andExpect(content().string("Success"))
+                .andDo(print());
+
+        Mockito.verify(socksService).upload(path);
+    }
+
+    @Test
+    @SneakyThrows
+    void batch_whenLoadFileDataException() {
+        String path = "any path";
+        Mockito.when(socksService.upload(path))
+                .thenThrow(new LoadFileDataException());
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/socks/batch")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .param("path", path))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("Ошибка при чтении файла"))
                 .andDo(print());
     }
 }
