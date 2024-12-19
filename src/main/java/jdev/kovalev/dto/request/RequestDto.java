@@ -15,7 +15,7 @@ import javax.validation.constraints.PositiveOrZero;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class IncomeRequestDto {
+public class RequestDto {
     @NotNull(message = "Цвет носков должен быть указан")
     @Length(max = 20, message = "Ограничение по длине для поля цвет - до 20 символов")
     private String color;

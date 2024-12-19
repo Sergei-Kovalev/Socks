@@ -1,6 +1,6 @@
 package jdev.kovalev.controller;
 
-import jdev.kovalev.dto.request.IncomeRequestDto;
+import jdev.kovalev.dto.request.RequestDto;
 import jdev.kovalev.dto.response.SocksResponseDto;
 import jdev.kovalev.service.SocksService;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,12 @@ public class SocksController {
     private final SocksService socksService;
 
     @PostMapping("/socks/income")
-    public ResponseEntity<SocksResponseDto> income(@RequestBody @Valid IncomeRequestDto requestDto) {
+    public ResponseEntity<SocksResponseDto> income(@RequestBody @Valid RequestDto requestDto) {
         return ResponseEntity.ok(socksService.income(requestDto));
+    }
+
+    @PostMapping("/socks/outcome")
+    public ResponseEntity<SocksResponseDto> ountcome(@RequestBody @Valid RequestDto requestDto) {
+        return ResponseEntity.ok(socksService.outcome(requestDto));
     }
 }

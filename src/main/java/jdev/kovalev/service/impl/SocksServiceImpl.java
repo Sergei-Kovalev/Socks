@@ -1,8 +1,9 @@
 package jdev.kovalev.service.impl;
 
-import jdev.kovalev.dto.request.IncomeRequestDto;
+import jdev.kovalev.dto.request.RequestDto;
 import jdev.kovalev.dto.response.SocksResponseDto;
 import jdev.kovalev.entity.Socks;
+import jdev.kovalev.exception.NotEnoughSocksException;
 import jdev.kovalev.mapper.SocksMapper;
 import jdev.kovalev.repository.SocksRepository;
 import jdev.kovalev.service.SocksService;
@@ -20,11 +21,11 @@ public class SocksServiceImpl implements SocksService {
 
     @Override
     @Transactional
-    public SocksResponseDto income(IncomeRequestDto requestDto) {
+    public SocksResponseDto income(RequestDto requestDto) {
         double cottonPercentage = (double) requestDto.getCottonPercentage() / 100;
         return socksRepository.findSocksByColorAndCottonPercentage(requestDto.getColor(), cottonPercentage)
                 .map(socks -> {
-                    socks.setNumber(requestDto.getNumber() + socks.getNumber());
+                    socks.setNumber(socks.getNumber() + requestDto.getNumber());
                     return socksMapper.fromSocksToSocksResponseDto(socks);
                 })
                 .orElseGet(() -> {
@@ -36,5 +37,20 @@ public class SocksServiceImpl implements SocksService {
                     Socks savedSocks = socksRepository.save(socksForSave);
                     return socksMapper.fromSocksToSocksResponseDto(savedSocks);
                 });
+    }
+
+    @Override
+    public SocksResponseDto outcome(RequestDto requestDto) {
+        double cottonPercentage = (double) requestDto.getCottonPercentage() / 100;
+        return socksRepository.findSocksByColorAndCottonPercentage(requestDto.getColor(), cottonPercentage)
+                .map(socks -> {
+                    if (socks.getNumber() < requestDto.getNumber()) {
+                        throw new NotEnoughSocksException();
+                    } else {
+                        socks.setNumber(socks.getNumber() - requestDto.getNumber());
+                        return socksMapper.fromSocksToSocksResponseDto(socks);
+                    }
+                })
+                .orElseThrow(NotEnoughSocksException::new);
     }
 }

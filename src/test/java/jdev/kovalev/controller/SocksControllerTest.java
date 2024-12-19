@@ -2,8 +2,9 @@ package jdev.kovalev.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jdev.kovalev.controller.hadler.ExceptionHandlerController;
-import jdev.kovalev.dto.request.IncomeRequestDto;
+import jdev.kovalev.dto.request.RequestDto;
 import jdev.kovalev.dto.response.SocksResponseDto;
+import jdev.kovalev.exception.NotEnoughSocksException;
 import jdev.kovalev.service.SocksService;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +23,7 @@ import java.util.UUID;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc
@@ -35,7 +37,7 @@ class SocksControllerTest {
     private SocksController socksController;
 
     private ObjectMapper objectMapper;
-    private IncomeRequestDto incomeRequestDto;
+    private RequestDto requestDto;
     private SocksResponseDto socksResponseDto;
     private UUID uuid;
 
@@ -49,7 +51,7 @@ class SocksControllerTest {
                 .build();
         objectMapper = new ObjectMapper();
         uuid = UUID.fromString("1fcc470d-a691-4d0d-9a23-b8b455c5f586");
-        incomeRequestDto = IncomeRequestDto.builder()
+        requestDto = RequestDto.builder()
                 .color("yellow")
                 .cottonPercentage(90)
                 .number(50)
@@ -66,10 +68,10 @@ class SocksControllerTest {
     @Test
     @SneakyThrows
     void income_whenCorrectRequest() {
-        String jsonRequestQuery = objectMapper.writeValueAsString(incomeRequestDto);
+        String jsonRequestQuery = objectMapper.writeValueAsString(requestDto);
         String jsonResponseQuery = objectMapper.writeValueAsString(socksResponseDto);
 
-        Mockito.when(socksService.income(incomeRequestDto))
+        Mockito.when(socksService.income(requestDto))
                 .thenReturn(socksResponseDto);
 
         mockMvc.perform(MockMvcRequestBuilders.post("/api/socks/income")
@@ -86,16 +88,54 @@ class SocksControllerTest {
     @Test
     @SneakyThrows
     void income_whenIncorrectRequest_thenReturnErrorResponse() {
-        incomeRequestDto.setNumber(1000000);
-        String jsonRequestQuery = objectMapper.writeValueAsString(incomeRequestDto);
+        requestDto.setNumber(1000000);
+        String jsonRequestQuery = objectMapper.writeValueAsString(requestDto);
 
-        Mockito.when(socksService.income(incomeRequestDto))
+        Mockito.when(socksService.income(requestDto))
                 .thenReturn(socksResponseDto);
 
         mockMvc.perform(MockMvcRequestBuilders.post("/api/socks/income")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(jsonRequestQuery))
                 .andExpect(status().isBadRequest())
+                .andDo(print());
+
+        Mockito.verify(socksService, Mockito.never()).income(Mockito.any());
+    }
+
+    @Test
+    @SneakyThrows
+    void outcome_whenCorrectRequest() {
+        requestDto.setNumber(1);
+        String jsonRequestQuery = objectMapper.writeValueAsString(requestDto);
+        socksResponseDto.setNumber(socksResponseDto.getNumber() - 1);
+        String jsonResponseQuery = objectMapper.writeValueAsString(socksResponseDto);
+
+        Mockito.when(socksService.outcome(requestDto))
+                .thenReturn(socksResponseDto);
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/socks/outcome")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(jsonRequestQuery))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().json(jsonResponseQuery))
+                .andDo(print());
+    }
+
+    @Test
+    @SneakyThrows
+    void outcome_whenNotEnough_orNotPresent_thenReturnErrorResponse() {
+        String jsonRequestQuery = objectMapper.writeValueAsString(requestDto);
+
+        Mockito.when(socksService.outcome(requestDto))
+                .thenThrow(new NotEnoughSocksException());
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/socks/outcome")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(jsonRequestQuery))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("На складе недостаточно носков для Вашей операции"))
                 .andDo(print());
 
         Mockito.verify(socksService, Mockito.never()).income(Mockito.any());
