@@ -4,6 +4,7 @@ import jdev.kovalev.dto.request.RequestDto;
 import jdev.kovalev.dto.response.SocksResponseDto;
 import jdev.kovalev.entity.Socks;
 import jdev.kovalev.exception.NotEnoughSocksException;
+import jdev.kovalev.exception.UnlogicalFilterConditionException;
 import jdev.kovalev.mapper.SocksMapper;
 import jdev.kovalev.repository.SocksRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,7 +14,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -136,5 +140,80 @@ class SocksServiceImplTest {
         assertThatThrownBy(() -> socksService.outcome(requestDto))
                 .isInstanceOf(NotEnoughSocksException.class)
                 .hasMessageContaining("На складе недостаточно носков для Вашей операции");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void filter_whenParametersCorrect() {
+        Socks blue = Socks.builder().color("blue").build();
+        Socks red = Socks.builder().color("red").build();
+
+        SocksResponseDto blueDto = SocksResponseDto.builder().color("blue").build();
+        SocksResponseDto redDto = SocksResponseDto.builder().color("red").build();
+        List<SocksResponseDto> expected = List.of(blueDto, redDto);
+
+        List<Socks> socksList = List.of(blue, red);
+
+        Mockito.when(socksRepository.findAll(Mockito.any(Specification.class), Mockito.any(Sort.class)))
+                .thenReturn(socksList);
+        Mockito.when(socksMapper.fromSocksToSocksResponseDto(blue))
+                .thenReturn(blueDto);
+        Mockito.when(socksMapper.fromSocksToSocksResponseDto(red))
+                .thenReturn(redDto);
+
+        List<SocksResponseDto> actual = socksService.filter(
+                null, 10, 20, null,
+                null, null, null);
+
+        assertThat(actual)
+                .isNotNull()
+                .hasSize(2)
+                .hasSameElementsAs(expected);
+    }
+
+    @Test
+    void filter_whenParametersIncorrect_tooManyCottonParameters_thenThrowException() {
+        Integer cottonMoreThan = 10;
+        Integer cottonLessThan = 20;
+        Integer cottonEqual = 15;
+
+        assertThatThrownBy(() -> socksService.filter(null, cottonMoreThan, cottonLessThan, cottonEqual,
+                                                     null, null, null))
+                .isInstanceOf(UnlogicalFilterConditionException.class)
+                .hasMessageContaining("Параметры фильтрации выбраны некорректно");
+    }
+
+    @Test
+    void filter_whenParametersIncorrect_tooManyNumberParameters_thenThrowException() {
+        Integer numberMoreThan = 10;
+        Integer numberLessThan = 20;
+        Integer numberEqual = 15;
+
+        assertThatThrownBy(() -> socksService.filter(null, null, null, null,
+                                                     numberMoreThan, numberLessThan, numberEqual))
+                .isInstanceOf(UnlogicalFilterConditionException.class)
+                .hasMessageContaining("Параметры фильтрации выбраны некорректно");
+    }
+
+    @Test
+    void filter_whenParametersIncorrect_wrongCottonMoreAndLess_thenThrowException() {
+        Integer cottonMoreThan = 20;
+        Integer cottonLessThan = 10;
+
+        assertThatThrownBy(() -> socksService.filter(null, cottonMoreThan, cottonLessThan, null,
+                                                     null, null, null))
+                .isInstanceOf(UnlogicalFilterConditionException.class)
+                .hasMessageContaining("Параметры фильтрации выбраны некорректно");
+    }
+
+    @Test
+    void filter_whenParametersIncorrect_wrongNumberMoreAndLess_thenThrowException() {
+        Integer numberMoreThan = 20;
+        Integer numberLessThan = 10;
+
+        assertThatThrownBy(() -> socksService.filter(null, null, null, null,
+                                                     numberMoreThan, numberLessThan, null))
+                .isInstanceOf(UnlogicalFilterConditionException.class)
+                .hasMessageContaining("Параметры фильтрации выбраны некорректно");
     }
 }

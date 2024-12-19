@@ -5,6 +5,7 @@ import jdev.kovalev.controller.hadler.ExceptionHandlerController;
 import jdev.kovalev.dto.request.RequestDto;
 import jdev.kovalev.dto.response.SocksResponseDto;
 import jdev.kovalev.exception.NotEnoughSocksException;
+import jdev.kovalev.exception.UnlogicalFilterConditionException;
 import jdev.kovalev.service.SocksService;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,7 +19,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.util.LinkedMultiValueMap;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -39,6 +42,7 @@ class SocksControllerTest {
     private ObjectMapper objectMapper;
     private RequestDto requestDto;
     private SocksResponseDto socksResponseDto;
+    private List<SocksResponseDto> socksResponseDtoList;
     private UUID uuid;
 
 
@@ -63,6 +67,19 @@ class SocksControllerTest {
                 .number(50)
                 .build();
 
+        socksResponseDtoList = List.of(
+                SocksResponseDto.builder()
+                        .id(uuid)
+                        .color("white")
+                        .cottonPercentage("20%")
+                        .number(30)
+                        .build(),
+                SocksResponseDto.builder()
+                        .id(uuid)
+                        .color("white")
+                        .cottonPercentage("30%")
+                        .number(40)
+                        .build());
     }
 
     @Test
@@ -121,6 +138,8 @@ class SocksControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(jsonResponseQuery))
                 .andDo(print());
+
+        Mockito.verify(socksService).outcome(Mockito.any());
     }
 
     @Test
@@ -137,7 +156,53 @@ class SocksControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("На складе недостаточно носков для Вашей операции"))
                 .andDo(print());
+    }
 
-        Mockito.verify(socksService, Mockito.never()).income(Mockito.any());
+    @Test
+    @SneakyThrows
+    void filter_whenCorrectRequest() {
+        String color = "white";
+        Integer cottonMoreThan = 10;
+        Integer cottonLessThan = 50;
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("color", color);
+        params.add("cottonMoreThan", String.valueOf(cottonMoreThan));
+        params.add("cottonLessThan", String.valueOf(cottonLessThan));
+
+        Mockito.when(socksService.filter(color, cottonMoreThan, cottonLessThan,
+                                         null, null, null, null))
+                .thenReturn(socksResponseDtoList);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/socks")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .params(params))
+                .andExpect(status().isOk())
+                .andDo(print());
+
+        Mockito.verify(socksService).filter(Mockito.any(), Mockito.any(),Mockito.any(),
+                                            Mockito.any(),Mockito.any(),Mockito.any(),Mockito.any());
+    }
+
+    @Test
+    @SneakyThrows
+    void filter_whenIncorrectRequest() {
+        String color = "white";
+        Integer cottonMoreThan = 50;
+        Integer cottonLessThan = 10;
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("color", color);
+        params.add("cottonMoreThan", String.valueOf(cottonMoreThan));
+        params.add("cottonLessThan", String.valueOf(cottonLessThan));
+
+        Mockito.when(socksService.filter(color, cottonMoreThan, cottonLessThan,
+                                         null, null, null, null))
+                .thenThrow(new UnlogicalFilterConditionException());
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/socks")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .params(params))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Параметры фильтрации выбраны некорректно"))
+                .andDo(print());
     }
 }
