@@ -29,6 +29,7 @@ repositories {
 
 val mapstructVersion = "1.6.3"
 val apachePoiVersion = "5.3.0"
+val testcontainersVersion = "1.20.4"
 
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
@@ -50,6 +51,10 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	testImplementation("org.assertj:assertj-core:3.26.3")
+
+	testImplementation("org.testcontainers:testcontainers:${testcontainersVersion}")
+	testImplementation("org.testcontainers:junit-jupiter:${testcontainersVersion}")
+	testImplementation("org.testcontainers:postgresql:${testcontainersVersion}")
 
 	implementation ("org.mapstruct:mapstruct:${mapstructVersion}")
 	annotationProcessor ("org.mapstruct:mapstruct-processor:${mapstructVersion}")
