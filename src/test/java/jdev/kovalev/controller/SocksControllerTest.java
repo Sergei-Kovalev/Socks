@@ -1,7 +1,7 @@
 package jdev.kovalev.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jdev.kovalev.controller.hadler.ExceptionHandlerController;
+import jdev.kovalev.controller.handler.ExceptionHandlerController;
 import jdev.kovalev.dto.request.RequestDto;
 import jdev.kovalev.dto.response.SocksResponseDto;
 import jdev.kovalev.exception.LoadFileDataException;

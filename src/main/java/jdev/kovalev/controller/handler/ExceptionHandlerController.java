@@ -1,4 +1,4 @@
-package jdev.kovalev.controller.hadler;
+package jdev.kovalev.controller.handler;
 
 import jdev.kovalev.dto.response.ErrorResponse;
 import jdev.kovalev.exception.LoadFileDataException;
