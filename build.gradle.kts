@@ -36,6 +36,9 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.liquibase:liquibase-core")
 
+	implementation("org.springdoc:springdoc-openapi-ui:1.8.0")
+	implementation("io.swagger.core.v3:swagger-annotations:2.2.27")
+
 	compileOnly("org.projectlombok:lombok")
 	runtimeOnly("org.postgresql:postgresql")
 	annotationProcessor("org.projectlombok:lombok")

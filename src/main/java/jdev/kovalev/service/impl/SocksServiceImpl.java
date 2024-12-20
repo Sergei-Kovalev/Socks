@@ -38,7 +38,7 @@ public class SocksServiceImpl implements SocksService {
     @Override
     @Transactional
     public SocksResponseDto income(RequestDto requestDto) {
-        double cottonPercentage = (double) requestDto.getCottonPercentage() / 100;
+        double cottonPercentage = (double) requestDto.getCottonPercentage() / 100.00;
         return socksRepository.findSocksByColorAndCottonPercentage(requestDto.getColor(), cottonPercentage)
                 .map(socks -> {
                     socks.setNumber(socks.getNumber() + requestDto.getNumber());
@@ -58,7 +58,7 @@ public class SocksServiceImpl implements SocksService {
     @Override
     @Transactional
     public SocksResponseDto outcome(RequestDto requestDto) {
-        double cottonPercentage = (double) requestDto.getCottonPercentage() / 100;
+        double cottonPercentage = (double) requestDto.getCottonPercentage() / 100.00;
         return socksRepository.findSocksByColorAndCottonPercentage(requestDto.getColor(), cottonPercentage)
                 .map(socks -> {
                     if (socks.getNumber() < requestDto.getNumber()) {
@@ -101,7 +101,7 @@ public class SocksServiceImpl implements SocksService {
         return socksRepository.findById(uuid)
                 .map(socks -> {
                     socks.setColor(requestDto.getColor());
-                    socks.setCottonPercentage((double) (requestDto.getCottonPercentage() / 100));
+                    socks.setCottonPercentage(requestDto.getCottonPercentage() / 100.00);
                     socks.setNumber(requestDto.getNumber());
                     return socksMapper.fromSocksToSocksResponseDto(socks);
                 })
