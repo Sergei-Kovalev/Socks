@@ -1,0 +1,46 @@
+version: "3.9"
+services:
+  PostgreSQL:
+    image: postgres:16.0
+    container_name: PostgreSQL
+    user: root
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_DB: "socks_db"
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    volumes:
+      - .:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d socks_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+    networks:
+      - postgres
+
+  socks-app:
+    image: socks-app
+    user: root
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "9009:9009"
+    depends_on:
+      - PostgreSQL
+    networks:
+      - postgres
+
+networks:
+  postgres:
+    driver: bridge
